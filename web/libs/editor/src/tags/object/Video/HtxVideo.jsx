@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Hls from "hls.js";
 
 import { IconZoomIn } from "../../../assets/icons";
 import { Button } from "../../../common/Button/Button";
@@ -329,7 +330,7 @@ const HtxVideoView = ({ item, store }) => {
   );
 
   const handleVideoLoad = useCallback(
-    ({ length, videoDimensions }) => {
+    async ({ length, videoDimensions }) => {
       setLoaded(true);
       setZoom(videoDimensions.ratio);
       setVideoDimensions(videoDimensions);
@@ -337,6 +338,16 @@ const HtxVideoView = ({ item, store }) => {
       item.setOnlyFrame(1);
       item.setLength(length);
       item.setReady(true);
+
+      if (Hls.isSupported() && item._value.endsWith(".m3u8")) {
+        const response = await fetch("PLACEHOLDER_API_URL");
+        const data = await response.json();
+        const m3u8Url = data.m3u8Url;
+
+        const hls = new Hls();
+        hls.loadSource(m3u8Url);
+        hls.attachMedia(item.ref.current);
+      }
     },
     [item, setVideoLength],
   );
@@ -481,6 +492,22 @@ const HtxVideoView = ({ item, store }) => {
       timeline: true,
     });
   }
+
+  useEffect(() => {
+    let hls;
+
+    if (Hls.isSupported() && item._value.endsWith(".m3u8")) {
+      hls = new Hls();
+      hls.loadSource(item._value);
+      hls.attachMedia(item.ref.current);
+    }
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+    };
+  }, [item._value]);
 
   return (
     <ObjectTag item={item}>

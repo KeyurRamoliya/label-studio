@@ -1,5 +1,6 @@
 import { getRoot, types } from "mobx-state-tree";
 import React from "react";
+import Hls from "hls.js";
 
 import { AnnotationMixin } from "../../../mixins/AnnotationMixin";
 import IsReadyMixin from "../../../mixins/IsReadyMixin";
@@ -68,6 +69,7 @@ const Model = types
     frame: 1,
     length: 1,
     drawingRegion: null,
+    hls: null,
   }))
   .views((self) => ({
     get store() {
@@ -110,6 +112,10 @@ const Model = types
       if (!framerate || isNaN(framerate)) self.framerate = "24";
       else if (framerate < 1) self.framerate = String(1 / framerate);
       else self.framerate = String(framerate);
+
+      if (Hls.isSupported()) {
+        self.hls = new Hls();
+      }
     },
   }))
   ////// Sync actions
@@ -270,6 +276,23 @@ const Model = types
 
       finishDrawing() {
         self.drawingRegion = null;
+      },
+
+      async handleVideoLoad({ length, videoDimensions }) {
+        if (self.hls && self._value.endsWith(".m3u8")) {
+          const response = await fetch("PLACEHOLDER_API_URL");
+          const data = await response.json();
+          const m3u8Url = data.m3u8Url;
+
+          self.hls.loadSource(m3u8Url);
+          self.hls.attachMedia(self.ref.current);
+        }
+      },
+
+      beforeDestroy() {
+        if (self.hls) {
+          self.hls.destroy();
+        }
       },
     };
   });

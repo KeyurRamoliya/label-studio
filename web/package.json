@@ -89,7 +89,8 @@
     "strman": "^2.0.1",
     "wavesurfer.js": "^6.0.1",
     "xpath-range": "^1.1.1",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "hls.js": "^1.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.2",
